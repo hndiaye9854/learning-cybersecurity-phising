@@ -6,11 +6,11 @@ services:
     restart: unless-stopped
     env_file: .env
     environment:
-      PORT: 3000
+      PORT: 3010
       DATA_FILE: /app/data/submissions.json
     # Exposé uniquement en local : nginx fait le reverse proxy en HTTPS.
     ports:
-      - "127.0.0.1:${PORT:-3000}:3000"
+      - "127.0.0.1:${HOST_PORT:-8130}:3010"
     volumes:
       - phishing-demo-data:/app/data
     read_only: true

@@ -32,13 +32,13 @@ jobs:
 
       - name: Vérifier que l'application démarre
         env:
-          PORT: 3000
+          PORT: 3010
           ADMIN_TOKEN: ci-token-not-secret
           DATA_FILE: /tmp/ci-data/submissions.json
         run: |
           node src/server.js &
           for i in $(seq 1 20); do
-            curl -fsS http://127.0.0.1:3000/healthz && exit 0
+            curl -fsS http://127.0.0.1:3010/healthz && exit 0
             sleep 0.5
           done
           echo "L'application n'a pas démarré" && exit 1

@@ -111,7 +111,7 @@ cp .env.example .env        # puis éditez ADMIN_TOKEN
 npm start                   # ou : npm run dev (rechargement automatique)
 ```
 
-Ouvrez <http://localhost:3000>, puis <http://localhost:3000/stats>
+Ouvrez <http://localhost:3010>, puis <http://localhost:3010/stats>
 (identifiant : n’importe quoi, mot de passe : votre `ADMIN_TOKEN`).
 
 Vérifications :
@@ -127,7 +127,8 @@ Variables lues depuis `.env` (voir `.env.example`) :
 
 | Variable | Défaut | Description |
 |---|---|---|
-| `PORT` | `3000` | Port d’écoute |
+| `PORT` | `3010` | Port d’écoute de l’application |
+| `HOST_PORT` | `8130` | Port publié sur l’hôte par docker compose (`127.0.0.1` uniquement) |
 | `ADMIN_TOKEN` | *(vide)* | Mot de passe de `/stats`. Si vide, `/stats` est désactivée |
 | `DATA_FILE` | `data/submissions.json` | Fichier de stockage |
 
@@ -152,8 +153,8 @@ docker compose up -d --build
 docker compose logs -f
 ```
 
-L’application écoute sur `127.0.0.1:3000` uniquement (pas exposée
-directement sur Internet) ; nginx sert de reverse proxy HTTPS. Les données sont
+L’application écoute sur le port 3010 dans le conteneur et n’est publiée que sur
+`127.0.0.1:8130` (pas exposée directement sur Internet) ; nginx sert de reverse proxy HTTPS. Les données sont
 conservées dans le volume Docker `phishing-demo-data`.
 
 ## Déploiement sur un VPS
@@ -197,7 +198,7 @@ cp .env.example .env
 sed -i "s|^ADMIN_TOKEN=.*|ADMIN_TOKEN=$(openssl rand -base64 24)|" .env
 grep ADMIN_TOKEN .env           # notez-le pour la présentation
 docker compose up -d --build
-curl -s http://127.0.0.1:3000/healthz   # → {"status":"ok"}
+curl -s http://127.0.0.1:8130/healthz   # → {"status":"ok"}
 ```
 
 ### 5. Certificat HTTPS (Let’s Encrypt)
@@ -282,7 +283,7 @@ Le workflow `.github/workflows/deploy.yml` se lance à chaque push sur `main`
 1. construit l’image Docker sur GitHub Actions ;
 2. la compresse et la copie sur le VPS par SCP ;
 3. la charge sur le VPS, remplace le conteneur `phishing-demo`
-   (port `127.0.0.1:3000`, volume `phishing-demo-data`, lecture seule) ;
+   (port `127.0.0.1:8130` vers 3010, volume `phishing-demo-data`, lecture seule) ;
 4. vérifie que `/healthz` répond, sinon affiche les logs et échoue.
 
 Il est **désactivé par défaut** : le job ne s’exécute que si la variable de

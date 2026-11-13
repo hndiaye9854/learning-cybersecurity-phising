@@ -3,7 +3,7 @@
 require('dotenv').config({ quiet: true });
 const { createApp } = require('./app');
 
-const PORT = Number(process.env.PORT) || 3000;
+const PORT = Number(process.env.PORT) || 3010;
 const HOST = process.env.HOST || '0.0.0.0';
 const ADMIN_TOKEN = process.env.ADMIN_TOKEN || '';
 const DATA_FILE = process.env.DATA_FILE || 'data/submissions.json';
