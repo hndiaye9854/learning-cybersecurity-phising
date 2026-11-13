@@ -1,0 +1,85 @@
+name: deploy
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+concurrency:
+  group: deploy
+  cancel-in-progress: false
+
+jobs:
+  build-and-deploy:
+    name: Build et déploiement
+    # Désactivé tant que la variable de dépôt DEPLOY_ENABLED ne vaut pas "true"
+    if: ${{ vars.DEPLOY_ENABLED == 'true' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Build image Docker
+        run: |
+          docker build -t portail-sensibilisation-phishing:latest .
+          docker save portail-sensibilisation-phishing:latest | gzip > image.tar.gz
+          echo "→ Image buildée et compressée."
+
+      - name: Transfert de l'image vers le VPS
+        uses: appleboy/scp-action@v0.1.7
+        with:
+          host: ${{ secrets.VPS_HOST }}
+          username: ${{ secrets.VPS_USERNAME }}
+          key: ${{ secrets.VPS_SSH_KEY }}
+          port: ${{ secrets.VPS_PORT || 22 }}
+          source: image.tar.gz
+          target: /tmp/
+
+      - name: Déploiement sur le VPS
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.VPS_HOST }}
+          username: ${{ secrets.VPS_USERNAME }}
+          key: ${{ secrets.VPS_SSH_KEY }}
+          port: ${{ secrets.VPS_PORT || 22 }}
+          script: |
+            set -e
+            ENV_FILE="$HOME/phishing-demo/.env"
+            if [ ! -f "$ENV_FILE" ]; then
+              echo "ERREUR : $ENV_FILE introuvable (ADMIN_TOKEN requis)."
+              exit 1
+            fi
+
+            docker load < /tmp/image.tar.gz
+
+            docker stop phishing-demo 2>/dev/null || true
+            docker rm   phishing-demo 2>/dev/null || true
+
+            docker run -d \
+              --name phishing-demo \
+              --restart unless-stopped \
+              --env-file "$ENV_FILE" \
+              -e PORT=3000 \
+              -e DATA_FILE=/app/data/submissions.json \
+              -p 127.0.0.1:3000:3000 \
+              -v phishing-demo-data:/app/data \
+              --read-only --tmpfs /tmp \
+              --security-opt no-new-privileges:true \
+              portail-sensibilisation-phishing:latest
+
+            rm -f /tmp/image.tar.gz
+            docker image prune -f
+
+            # Vérification réelle : l'application répond sur /healthz
+            for i in $(seq 1 15); do
+              if curl -fsS http://127.0.0.1:3000/healthz >/dev/null 2>&1; then
+                echo "✓ phishing-demo déployé sur 127.0.0.1:3000."
+                exit 0
+              fi
+              sleep 1
+            done
+            echo "ERREUR : l'application ne répond pas."
+            docker logs phishing-demo
+            exit 1

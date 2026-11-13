@@ -1,0 +1,24 @@
+services:
+  app:
+    build: .
+    image: portail-sensibilisation-phishing:latest
+    container_name: phishing-demo
+    restart: unless-stopped
+    env_file: .env
+    environment:
+      PORT: 3000
+      DATA_FILE: /app/data/submissions.json
+    # Exposé uniquement en local : nginx fait le reverse proxy en HTTPS.
+    ports:
+      - "127.0.0.1:${PORT:-3000}:3000"
+    volumes:
+      - phishing-demo-data:/app/data
+    read_only: true
+    tmpfs:
+      - /tmp
+    security_opt:
+      - no-new-privileges:true
+
+volumes:
+  phishing-demo-data:
+    name: phishing-demo-data

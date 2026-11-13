@@ -1,0 +1,28 @@
+{
+  "name": "portail-sensibilisation-phishing",
+  "version": "1.0.0",
+  "description": "Démo pédagogique de sensibilisation au phishing (collecte uniquement d'un pseudonyme).",
+  "main": "src/server.js",
+  "private": true,
+  "license": "MIT",
+  "author": "Hamidou NDIAYE",
+  "type": "commonjs",
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "start": "node src/server.js",
+    "dev": "node --watch src/server.js",
+    "lint": "eslint .",
+    "test": "node --test test/"
+  },
+  "dependencies": {
+    "dotenv": "^18.0.10",
+    "express": "^4.22.3"
+  },
+  "devDependencies": {
+    "@eslint/js": "^9.39.5",
+    "eslint": "^9.39.5",
+    "globals": "^17.14.0"
+  }
+}
