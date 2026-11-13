@@ -298,21 +298,21 @@ Pour l’activer :
    cat ~/.ssh/gh_deploy.pub >> ~/.ssh/authorized_keys
    cat ~/.ssh/gh_deploy        # clé privée à copier dans le secret GitHub
    ```
-2. Sur le VPS, créez le fichier d’environnement lu par le conteneur :
-   ```bash
-   mkdir -p ~/phishing-demo
-   echo "ADMIN_TOKEN=$(openssl rand -base64 24)" > ~/phishing-demo/.env
-   chmod 600 ~/phishing-demo/.env
-   ```
-3. Dans GitHub, *Settings → Secrets and variables → Actions*, ajoutez les
-   secrets `VPS_HOST`, `VPS_USERNAME`, `VPS_SSH_KEY` et `VPS_PORT`
-   (optionnel, 22 par défaut). Avec `gh` :
+2. Dans GitHub, *Settings → Secrets and variables → Actions*, ajoutez les
+   secrets `VPS_HOST`, `VPS_USERNAME`, `VPS_SSH_KEY`, `VPS_PORT` (optionnel,
+   22 par défaut) et `ADMIN_TOKEN`. Avec `gh` :
    ```bash
    gh secret set VPS_HOST --body "IP_DU_VPS"
    gh secret set VPS_USERNAME --body "votre_utilisateur"
+   gh secret set VPS_PORT --body "22"
    gh secret set VPS_SSH_KEY < ~/.ssh/gh_deploy
+   openssl rand -base64 24 | gh secret set ADMIN_TOKEN
    ```
-4. Activez le déploiement :
+   À chaque déploiement, le workflow écrit `~/phishing-demo/.env` sur le VPS
+   (droits `600`) à partir du secret `ADMIN_TOKEN` : rien à créer à la main.
+   Pour changer le mot de passe de `/stats`, modifiez le secret puis relancez
+   le workflow.
+3. Activez le déploiement :
    ```bash
    gh variable set DEPLOY_ENABLED --body true
    ```

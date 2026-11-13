@@ -39,18 +39,25 @@ jobs:
 
       - name: Déploiement sur le VPS
         uses: appleboy/ssh-action@v1.0.3
+        env:
+          ADMIN_TOKEN: ${{ secrets.ADMIN_TOKEN }}
         with:
           host: ${{ secrets.VPS_HOST }}
           username: ${{ secrets.VPS_USERNAME }}
           key: ${{ secrets.VPS_SSH_KEY }}
           port: ${{ secrets.VPS_PORT || 22 }}
+          envs: ADMIN_TOKEN
           script: |
             set -e
-            ENV_FILE="$HOME/phishing-demo/.env"
-            if [ ! -f "$ENV_FILE" ]; then
-              echo "ERREUR : $ENV_FILE introuvable (ADMIN_TOKEN requis)."
+            if [ -z "$ADMIN_TOKEN" ]; then
+              echo "ERREUR : le secret ADMIN_TOKEN est vide."
               exit 1
             fi
+
+            # Fichier d'environnement du conteneur, généré depuis le secret GitHub
+            ENV_FILE="$HOME/phishing-demo/.env"
+            mkdir -p "$HOME/phishing-demo"
+            ( umask 077; printf 'ADMIN_TOKEN=%s\n' "$ADMIN_TOKEN" > "$ENV_FILE" )
 
             docker load < /tmp/image.tar.gz
 
